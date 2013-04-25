@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Introduction to Shark(SQL/Hive on Spark)</title>
+
+		<meta name="description" content="A framework for easily creating beautiful presentations using HTML">
+		<meta name="author" content="Hakim El Hattab">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="css/reveal.min.css">
+		<link rel="stylesheet" href="css/theme/default.css" id="theme">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- If the query includes 'print-pdf', use the PDF print sheet -->
+		<script>
+			document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+
+				<section>
+					<h2>Introduction to Shark</h2>
+					<h3>SQL and Rich Analytics at Scale</h3>
+					<p>
+						Reported by <a href="http://xiaoxiongmao.me">Jinyang Zhou</a> / <a href="http://twitter.com/ailurus1991">@ailurus1991</a>
+					</p>
+				</section>
+
+				<section>
+					<h2>What is Spark?</h2>
+					<p>
+						<strong>NOT a modified version of Hadoop</strong>
+					</p>
+					<p>
+						<strong>Separate, fast, MapReduce-link engine</strong>
+					</p>
+					<ul>
+						<li class="fragment">In-memory data storage for very fast iterative queries</li>
+						<li class="fragment">General execution graphs and powerful optimizations</li>
+						<li class="fragment">Up to 100x faster than Hadoop MapReduce</li>
+					</ul>
+					<p></p>
+					<p>
+						<strong>Compatible with Hadoop's storage APIs</strong>
+					</p>
+					<ul>
+						<li class="fragment">Can read/write to any Hadoop-supported system, including HDFS, HBase, SequenceFiles, etc</li>
+					</ul>
+					<aside class="notes">
+						Oh hey, these are some notes. They'll be hidden in your presentation, but you can see them if you open the speaker notes window (hit 's' on your keyboard).
+					</aside>
+				</section>
+
+				<section>
+					<h2>What is Shark?</h2>
+					<ul>
+						<li><strong>A SQL analytics engine built on top of Spark</strong></li>
+						<li><strong>Compatible with Apache Hive data, metastores, and queries(HiveQL, UDFs, etc)</strong></li>
+						<li><strong>Similar speedups of up to 100x</strong></li>
+					</ul>
+				</section>
+
+				<section>
+					<section>
+					<h2>Adoption</h2>
+					<ul>
+						<li><strong>In use of Yahoo!, Foursquare, Berkeley, Princetion & many others(possibly Taobao, Netease)</strong></li>
+						<li><strong>600+ member meetup, 800+ watcherson Github</strong></li>
+						<li><strong>30+ contributors</strong></li>
+					</ul>	
+					</section>
+					<section>
+						<img width="981" height="452" src="pic/douban.png">
+					</section>
+				</section>
+				<!-- Example of nested vertical slides -->
+
+				<section>
+					<h2>This Talk</h2>
+					<ul>
+						<li><strong>Hadoop & MapReduce</strong></li>
+						<li>Spark</li>
+						<li>Shark: SQL on Spark</li>
+						<li>Why is Hadoop Mapreduce slow?</li>
+					</ul>
+				</section>
+
+				<section>
+					<section>
+						<p>How do you scale up applications to PBs of data?</p>
+					</section>
+					<section>
+						<img width="157" height="186" src="pic/2.png">
+						<p>I can use hundreds or thousands of machines!</p>
+					</section>
+					<section>
+						<img width="130" height="128" src="pic/3.png">
+						<p>But distributed programming is hard(task scheduling, data synchronization, machines failures)</p>
+					</section>
+				</section>
+
+				<section>
+					<h2>MapReduce</h2>
+					<p><strong>Programming model:</strong> simple abstraction(i.e. map and reduce) inspired by functional programming</p>
+					<p><strong>Execution engine:</strong> runs on thousands of commodity machines.</p>
+				</section>
+
+				<section>
+					<h2>Hadoop</h2>
+					<p><strong>Hadoop Distributed File System(HDFS)</strong></p>
+					<ul>
+						<li class="fragment">A distributed file system modeled after Google File System</li>
+					</ul>
+					<p><strong>Hadoop MapReduce(aka MapRed, MR)</strong></p>
+					<p><strong>Many other related projects such as Hive(SQL on Hadoop)</strong></p>
+				</section>
+
+				<section>
+					<h2>Hive</h2>
+					<p><strong>A data warehouse</strong></p>
+					<ul>
+						<li class="fragment">initially developed by Facebook</li>
+						<li class="fragment">puts structure onto HDFS data(schema-on-read)</li>
+						<li class="fragment">compiles HiveQL queries into MapReudce jobs</li>
+						<li class="fragment">flexible and extensible: support UDFs, scripts, custom serializers, storage formats</li>
+					</ul>
+					<p><strong>Popular</strong></p>
+					<ul>
+						<li class="fragment">90+% of Facebook Hadoop jobs generated by Hive</li>
+					</ul>
+					<p><strong>OLTP(serving) vs OLAP (analytics)</strong></p>
+				</section>
+
+				<section>
+					<section>
+						<h2>Dterminism & Idempotence</h2>
+						<p><strong>Map and reduce functions are:</strong></p>
+						<ul>
+							<li>deterministic</li>
+							<li>side-effect free</li>
+						</ul>
+						<p><strong>Tasks are thus idempotent:</strong></p>
+						<ul>
+							<li>Rerunning them gets you the same result</li>
+						</ul>	
+					</section>
+					<section>
+						<h2>Dterminism & Idempotence</h2>
+						<p><strong>Fault-tolerance:</strong></p>
+						<ul>
+							<li>Rerun tasks originally schedualed on failed nodes</li>
+						</ul>
+						<p><strong>Straggers:</strong></p>
+						<ul>
+							<li>Rerun tasks originally schedualed on slow nodes</li>
+						</ul>	
+					</section>
+				</section>
+
+				<!-- Spark part-->
+				<section>
+					<h2>This Talk</h2>
+					<ul>
+						<li>Hadoop & MapReduce</li>
+						<li><strong>Spark</strong></li>
+						<li>Shark: SQL on Spark</li>
+						<li>Why is Hadoop Mapreduce slow?</li>
+					</ul>
+				</section>
+
+				<section>
+					<section>
+						<h3>Why go Beyond MapReduce?</h3>
+						<p>MapReduce simplified big data analysis by giving a reliable programming model for large clusters</p>
+						<p>But as soon as it got popular, users wanted:</p>
+						<ul>
+							<li class="fragment">More <strong>complex</strong>, multi-stage applications</li>
+							<li class="fragment">More <strong>interactive</strong>, ad-hoc queries</li>
+						</ul>	
+					</section>
+					<section>
+						<p>Complex jobs and interactive queries both need one thing that MapReduce lacks:</p>
+						<p class="fragment">Efficient primitives for <strong>data sharing</strong></p>
+						<img class="fragment" width="872" height="254" src="pic/dshare.png">
+					</section>
+					<section>
+						<p>In MapReduce, the only way to share data across jobs is stable storage(e.g. HDFS)</p>
+						<P class="fragment highlight-red"><strong>SLOW!</strong></P>
+					</section>
+				</section>
+
+				<section>
+					<h2>Solution</h2>
+					<p><strong>Resilient Distributed Datasets(RDDs)</strong></p>
+					<ul>
+						<li class="fragment">Distributed collections of objects that can be stored in memory for fast reuse</li>
+						<li class="fragment">Automatically recover lost data on failure</li>
+						<li class="fragment">Support a wide range of applications</li>
+					</ul>
+				</section>
+
+				<section>
+					<section>
+						<h2>Programming Model</h2>
+						<p>Resilient distributed datasets(RDDs)</p>
+						<ul>
+							<li class="fragment">Immutable, partitioned collections of objects</li>
+							<li class="fragment">Can be cached in memory for effcient reuse</li>
+						</ul>
+						<p></p>
+						<p>Transformations(e.g. map, filter, groupBy, join)</p>
+						<ul>
+							<li class="fragment">Build RDDs from other RDDs</li>
+						</ul>
+						<p></p>
+						<p>Actions(e.g. count, collect, save)</p>
+						<ul>
+							<li class="fragment">Return a result or write it to storage</li>
+						</ul>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>Fault Tolerance</h2>
+						<p>RDDs	track the series of	transformations	used to	build	them (their	lineage) to	recompute lost data</p>
+					</section>
+					<section>
+						<h2>Fault Recovery Results</h2>
+						<img width="809" height="389" src="pic/fault.png">
+
+					</section>
+					<section>
+						<h2>Tradeoff Space</h2>
+						<img width="836" height="477" src="pic/tradeoff.png">
+
+					</section>
+					<section>
+						<h2>Behavior with Not Enough RAM</h2>
+						<img width="846" height="439" src="pic/ram.png">
+					</section>
+					<section>
+						<h2>Logistic Regression Performance</h2>
+						<img width="901" height="436" src="pic/logistic.png">
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>Implementation</h2>
+						<p>Use	Mesos/YARN	to	share	resources	with	Hadoop	&	other	frameworks</p>
+						<p>Can	access	any	Hadoop	input	source	(HDFS,	S3,	…)</p>
+						<p>20k lines of code</p>
+						<img width="415" height="229" src="pic/sharkimp.png">
+
+					</section>
+					<section>
+						<h2>User Applications</h2>
+						<ul>
+							<li>In-memory	analytics	&	anomaly	detection	(Conviva) </li>
+							<li>Interactive	queries	on	data	streams	(Quantiﬁnd)	</li>
+							<li>Exploratory	log	analysis	(Foursquare)	</li>
+							<li>Traffic	estimation	w/	GPS	data	(Mobile	Millennium)	</li>
+							<li>Twitter	spam	classiﬁcation	(Monarch)</li>
+						</ul>
+					</section>
+					<section>
+						<h2>Conviva GeoReport</h2>
+						<img width="881" height="253" src="pic/conviva.png">
+						<p>Group	aggregations	on	many	keys	w/	same	ﬁlter	</p>
+						<p>40×	gain	over	Hive	from	avoiding	repeated	reading,	deserialization	and	ﬁltering</p>
+					</section>
+				</section>
+
+				<!-- Spark part-->
+				<section>
+					<h2>This Talk</h2>
+					<ul>
+						<li>Hadoop & MapReduce</li>
+						<li>Spark</li>
+						<li><strong>Shark: SQL on Spark</strong></li>
+						<li>Why is Hadoop Mapreduce slow?</li>
+					</ul>
+				</section>
+
+				<section>
+					<section>
+						<h2>Challenges</h2>
+						<ul>
+							<li>Data volumes expanding</li>
+							<li>Faults and stragglers complicate parallel database design</li>
+							<li>Low-latency, interactivity</li>
+						</ul>
+					</section>
+					<section>
+						<h2>MPP Databases</h2>
+						<ul>
+							<li>Vertica, SAP HANA, Teradata, Google Dremel...</li>
+							<li class="fragment highlight-green">Fast!</li>
+							<li  class="fragment highlight-red">Generally not fault-tolerant; challenging for long running queries as clusters scale up.</li>
+							<li  class="fragment highlight-red">Lack rich analytics such as ML and Graph algorithms.</li>
+						</ul>
+					</section>
+					<section>
+						<h2>MapReduce</h2>
+						<ul>
+							<li>Apache Hive, Google Tenzing, Turn Cheetah...</li>
+							<li  class="fragment highlight-green">Deterministic, idempotent tasks: enables fine-grained fault-tolerance and resouce sharing.</li>
+							<li  class="fragment highlight-green">Expressive ML algorithms.</li>
+							<li  class="fragment highlight-red">High-latency, dismissed for interactive workloads.</li>
+						</ul>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>Shark</h2>
+						<p><strong>A data warehouse that</strong></p>
+						<ul>
+							<li>builds on Spark,</li>
+							<li>scals out and is fault-tolerance,</li>
+							<li>supports low-latency, interactive queries through in-memory computation,</li>
+							<li>supports both SQL and complex analytics,</li>
+							<li>is compatible with Apache Hive(storage, serdes, UDFs, types, metadata).</li>
+						</ul>
+					</section>
+					<section>
+						<h2>Hive Architecture</h2>
+						<img width="839" height="470" src="pic/hive.png">
+
+					</section>
+					<section>
+						<h2>Shark Architecture</h2>
+						<img width="823" height="468" src="pic/shark.png">
+
+					</section>
+					<section>
+						<h2>Engine Features</h2>
+						<ul>
+							<li>Columnar Memory Store</li>
+							<li>ML Integration</li>
+							<li>Partial DAG Execution</li>
+							<li>Data Co-partitioning</li>
+							<li>Partition Pruning based on Range Statistics</li>
+						</ul>
+					</section>
+					<section>
+						<h2>Efficient In-Memory Storage</h2>
+						<p>Simply caching Hive records as Java objects is inefficient due to high per-object overhead</p>
+						<p>Instead, Shark employs column-oriented storage using <strong>arrays of primitive types.</strong></p>
+						<img width="628" height="244" src="pic/storage.png">
+
+					</section>
+					<section>
+						<p><strong>Benefit:</strong> similarly compact size to serialized data, but>5x faster to access</p>
+					</section>
+					<section>
+						<h2>ML Integration</h2>
+						<ul>
+							<li>Uniﬁed	system	for	query	processing	and	machine	learning</li>
+							<li>Query	processing	and	ML	share	the	same	set	of	workers	and	caches</li>
+						</ul>
+					</section>
+					<section>
+						<h2>Performance</h2>
+						<img width="887" height="491" src="pic/sharkper.png">
+
+					</section>
+				</section>
+
+				<!-- Spark part-->
+				<section>
+					<h2>This Talk</h2>
+					<ul>
+						<li>Hadoop & MapReduce</li>
+						<li>Spark</li>
+						<li>Shark: SQL on Spark</li>
+						<li><strong>Why is Hadoop Mapreduce slow?</strong></li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>Why are previous MR-based systems slow?</h2>
+					<ul>
+						<li>Disk-based intermediate outputs.</li>
+						<li>Inferior data format and layout(no control of data co-partitioning).</li>
+						<li>Execution strategies (lack of optimization based on data statistics).</li>
+						<li>Task scheduling and launch overhead!</li>
+					</ul>
+				</section>
+				<section>
+					<section>
+						<h2>Task Launch Overhead</h2>
+						<p><strong>Hadoop uses heartbeat to communicate scheduling decisions.</strong></p>
+						<p><strong>Task launch delay 5-10 seconds.</strong></p>
+						<p><strong>Spark uses an event-driven architecture and can launch tasks in 5ms</strong></p>
+						<ul>
+							<li>better parallelism</li>
+							<li>easier straggler mitigration</li>
+							<li>multi-tenancy resouce sharing</li>
+						</ul>
+					</section>
+					<section>
+						<h2>Task Launch Overhead</h2>
+						<img width="880" height="355" src="pic/overhead.png">
+
+					</section>
+				</section>
+				<!--
+				<section>
+					<section>
+						<h2>Vertical Slides</h2>
+						<p>
+							Slides can be nested inside of other slides,
+							try pressing <a href="#" class="navigate-down">down</a>.
+						</p>
+						<a href="#" class="image navigate-down">
+							<img width="178" height="238" src="https://s3.amazonaws.com/hakim-static/reveal-js/arrow.png" alt="Down arrow">
+						</a>
+					</section>
+					<section>
+						<h2>Basement Level 1</h2>
+						<p>Press down or up to navigate.</p>
+					</section>
+					<section>
+						<h2>Basement Level 2</h2>
+						<p>Cornify</p>
+						<a class="test" href="http://cornify.com">
+							<img width="280" height="326" src="https://s3.amazonaws.com/hakim-static/reveal-js/cornify.gif" alt="Unicorn">
+						</a>
+					</section>
+					<section>
+						<h2>Basement Level 3</h2>
+						<p>That's it, time to go back up.</p>
+						<a href="#/2" class="image">
+							<img width="178" height="238" src="https://s3.amazonaws.com/hakim-static/reveal-js/arrow.png" alt="Up arrow" style="-webkit-transform: rotate(180deg);">
+						</a>
+					</section>
+				</section>
+
+				<section>
+					<h2>Point of View</h2>
+					<p>
+						Press <strong>ESC</strong> to enter the slide overview. Hold down alt and click on any element to zoom in on it using <a href="http://lab.hakim.se/zoom-js">zoom.js</a>. Alt + click anywhere to zoom back out.
+					</p>
+				</section>
+
+				<section>
+					<h2>rvl.io</h2>
+					<p>
+						If you don't like writing slides in HTML you can use the online editor <a href="http://www.rvl.io" target="_blank">rvl.io</a>.
+					</p>
+				</section>
+
+				<section>
+					<h2>Works in Mobile Safari</h2>
+					<p>
+						Try it out! You can swipe through the slides and pinch your way to the overview.
+					</p>
+				</section>
+
+				<section>
+					<h2>Marvelous Unordered List</h2>
+					<ul>
+						<li>No order here</li>
+						<li>Or here</li>
+						<li>Or here</li>
+						<li>Or here</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>Fantastic Ordered List</h2>
+					<ol>
+						<li>One is smaller than...</li>
+						<li>Two is smaller than...</li>
+						<li>Three!</li>
+					</ol>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## Markdown support
+
+						For those of you who like that sort of thing. Instructions and a bit more info available [here](https://github.com/hakimel/reveal.js#markdown).
+
+							<section data-markdown>
+							  ## Markdown support
+
+							  For those of you who like that sort of thing.
+							  Instructions and a bit more info available [here](https://github.com/hakimel/reveal.js#markdown).
+							</section>
+					</script>
+				</section>
+
+				<section id="transitions">
+					<h2>Transition Styles</h2>
+					<p>
+						You can select from different transitions, like: <br>
+						<a href="?transition=cube#/transitions">Cube</a> -
+						<a href="?transition=page#/transitions">Page</a> -
+						<a href="?transition=concave#/transitions">Concave</a> -
+						<a href="?transition=zoom#/transitions">Zoom</a> -
+						<a href="?transition=linear#/transitions">Linear</a> -
+						<a href="?transition=fade#/transitions">Fade</a> -
+						<a href="?transition=none#/transitions">None</a> -
+						<a href="?#/transitions">Default</a>
+					</p>
+				</section>
+
+				<section id="themes">
+					<h2>Themes</h2>
+					<p>
+						Reveal.js comes with a few themes built in: <br>
+						<a href="?theme=sky#/themes">Sky</a> -
+						<a href="?theme=beige#/themes">Beige</a> -
+						<a href="?theme=simple#/themes">Simple</a> -
+						<a href="?theme=serif#/themes">Serif</a> -
+						<a href="?theme=night#/themes">Night</a> -
+						<a href="?#/themes">Default</a>
+					</p>
+					<p>
+						<small>
+							* Theme demos are loaded after the presentation which leads to flicker. In production you should load your theme in the <code>&lt;head&gt;</code> using a <code>&lt;link&gt;</code>.
+						</small>
+					</p>
+				</section>
+
+				<section>
+					<section data-state="alert">
+						<h2>Global State</h2>
+						<p>
+							Set <code>data-state="something"</code> on a slide and <code>"something"</code>
+							will be added as a class to the document element when the slide is open. This lets you
+							apply broader style changes, like switching the background.
+						</p>
+						<a href="#" class="image navigate-down">
+							<img width="178" height="238" src="https://s3.amazonaws.com/hakim-static/reveal-js/arrow.png" alt="Down arrow">
+						</a>
+					</section>
+					<section data-state="blackout">
+						<h2>"blackout"</h2>
+						<a href="#" class="image navigate-down">
+							<img width="178" height="238" src="https://s3.amazonaws.com/hakim-static/reveal-js/arrow.png" alt="Down arrow">
+						</a>
+					</section>
+					<section data-state="soothe">
+						<h2>"soothe"</h2>
+						<a href="#" class="image navigate-next">
+							<img width="178" height="238" src="https://s3.amazonaws.com/hakim-static/reveal-js/arrow.png" alt="Up arrow" style="-webkit-transform: rotate(-90deg);">
+						</a>
+					</section>
+				</section>
+
+				<section data-state="customevent">
+					<h2>Custom Events</h2>
+					<p>
+						Additionally custom events can be triggered on a per slide basis by binding to the <code>data-state</code> name.
+					</p>
+					<pre><code contenteditable style="font-size: 18px; margin-top: 20px;">Reveal.addEventListener( 'customevent', function() {
+	console.log( '"customevent" has fired' );
+} );
+					</code></pre>
+				</section>
+
+				<section>
+					<h2>Clever Quotes</h2>
+					<p>
+						These guys come in two forms, inline: <q cite="http://searchservervirtualization.techtarget.com/definition/Our-Favorite-Technology-Quotations">
+						The nice thing about standards is that there are so many to choose from</q> and block:
+					</p>
+					<blockquote cite="http://searchservervirtualization.techtarget.com/definition/Our-Favorite-Technology-Quotations">
+						For years there has been a theory that millions of monkeys typing at random on millions of typewriters would
+						reproduce the entire works of Shakespeare. The Internet has proven this theory to be untrue.
+					</blockquote>
+				</section>
+
+				<section>
+					<h2>Pretty Code</h2>
+					<pre><code contenteditable>
+function linkify( selector ) {
+  if( supports3DTransforms ) {
+
+    var nodes = document.querySelectorAll( selector );
+
+    for( var i = 0, len = nodes.length; i &lt; len; i++ ) {
+      var node = nodes[i];
+
+      if( !node.className ) ) {
+        node.className += ' roll';
+      }
+    };
+  }
+}
+					</code></pre>
+					<p>Courtesy of <a href="http://softwaremaniacs.org/soft/highlight/en/description/">highlight.js</a>.</p>
+				</section>
+
+				<section>
+					<h2>Intergalactic Interconnections</h2>
+					<p>
+						You can link between slides internally,
+						<a href="#/2/3">like this</a>.
+					</p>
+				</section>
+
+				<section>
+					<section>
+						<h2>Fragmented Views</h2>
+						<p>Hit the next arrow...</p>
+						<p class="fragment">... to step through ...</p>
+						<ol>
+							<li class="fragment"><code>any type</code></li>
+							<li class="fragment"><em>of view</em></li>
+							<li class="fragment"><strong>fragments</strong></li>
+						</ol>
+
+						<aside class="notes">
+							This slide has fragments which are also stepped through in the notes window.
+						</aside>
+					</section>
+					<section>
+						<h2>Fragment Styles</h2>
+						<p>There's a few styles of fragments, like:</p>
+						<p class="fragment grow">grow</p>
+						<p class="fragment shrink">shrink</p>
+						<p class="fragment roll-in">roll-in</p>
+						<p class="fragment fade-out">fade-out</p>
+						<p class="fragment highlight-red">highlight-red</p>
+						<p class="fragment highlight-green">highlight-green</p>
+						<p class="fragment highlight-blue">highlight-blue</p>
+					</section>
+				</section>
+
+				<section>
+					<h2>Spectacular image!</h2>
+					<a class="image" href="http://lab.hakim.se/meny/" target="_blank">
+						<img width="320" height="299" src="http://s3.amazonaws.com/hakim-static/portfolio/images/meny.png" alt="Meny">
+					</a>
+				</section>
+
+				<section>
+					<h2>Export to PDF</h2>
+					<p>Presentations can be <a href="https://github.com/hakimel/reveal.js#pdf-export">exported to PDF</a>, below is an example that's been uploaded to SlideShare.</p>
+					<iframe id="slideshare" src="http://www.slideshare.net/slideshow/embed_code/13872948" width="455" height="356" style="margin:0;overflow:hidden;border:1px solid #CCC;border-width:1px 1px 0;margin-bottom:5px" allowfullscreen> </iframe>
+					<script>
+						document.getElementById('slideshare').attributeName = 'allowfullscreen';
+					</script>
+				</section>
+
+				<section>
+					<h2>Take a Moment</h2>
+					<p>
+						Press b or period on your keyboard to enter the 'paused' mode. This mode is helpful when you want to take distracting slides off the screen
+						during a presentation.
+					</p>
+				</section>
+
+				<section>
+					<h2>Stellar Links</h2>
+					<ul>
+						<li><a href="https://github.com/hakimel/reveal.js">Source code on GitHub</a></li>
+						<li><a href="http://hakim.se/projects/reveal-js">Leave feedback on my site</a></li>
+						<li><a href="http://twitter.com/hakimel">Follow me on Twitter</a></li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>It's free</h2>
+					<p>
+						reveal.js and <a href="http://www.rvl.io">rvl.io</a> are entirely free but if you'd like to support the projects you can donate below.
+						Donations will go towards hosting and domain costs.
+					</p>
+					<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
+						<input type="hidden" name="cmd" value="_donations">
+						<input type="hidden" name="business" value="hakim.elhattab@gmail.com">
+						<input type="hidden" name="lc" value="US">
+						<input type="hidden" name="item_name" value="reveal.js / rvl.io">
+						<input type="hidden" name="no_note" value="0">
+						<input type="hidden" name="currency_code" value="USD">
+						<input type="hidden" name="bn" value="PP-DonationsBF:btn_donate_LG.gif:NonHostedGuest">
+						<input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+					</form>
+				</section>
+			-->
+				<section>
+					<h1>THE END</h1>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.min.js"></script>
+
+		<script>
+
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				theme: Reveal.getQueryHash().theme || 'serif', // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'page', // default/cube/page/concave/zoom/linear/fade/none
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/showdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+					{ src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+					// { src: 'plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; } }
+					// { src: 'plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
